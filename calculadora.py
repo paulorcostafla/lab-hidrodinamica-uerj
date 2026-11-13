@@ -28,7 +28,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Painel de Controle diretamente na tela principal (visível no celular e no PC)
+# Painel de Controle diretamente na tela principal
 st.subheader("Painel de Controle do Ensaio")
 st.caption("Ajuste os parâmetros da onda abaixo para atualizar os cálculos automaticamente:")
 
@@ -79,41 +79,60 @@ else:
 st.markdown("---")
 st.markdown(f"### Resultados da Simulação — Regime: <span style='color:{cor_badge};'>{regime}</span>", unsafe_allow_html=True)
 
-# Linha 1 de métricas: Parâmetros de Entrada do Ensaio
-st.markdown("**Parâmetros Definidos no Ensaio:**")
-in1, in2, in3, in4 = st.columns(4)
-in1.metric("Período (T)", f"{T:.2f} s")
-in2.metric("Altura da Onda (H)", f"{H:.2f} m")
-in3.metric("Profundidade (h)", f"{h:.2f} m")
-in4.metric("Densidade (ρ)", f"{rho:.0f} kg/m³")
+# Bloco 1: Parâmetros de Entrada em quadrados individuais
+with st.container(border=True):
+    st.markdown("**1. Parâmetros Definidos no Ensaio**")
+    in1, in2, in3, in4 = st.columns(4)
+    with in1:
+        with st.container(border=True):
+            st.metric("Período (T)", f"{T:.2f} s")
+    with in2:
+        with st.container(border=True):
+            st.metric("Altura da Onda (H)", f"{H:.2f} m")
+    with in3:
+        with st.container(border=True):
+            st.metric("Profundidade (h)", f"{h:.2f} m")
+    with in4:
+        with st.container(border=True):
+            st.metric("Densidade (ρ)", f"{rho:.0f} kg/m³")
+
+# Bloco 2: Parâmetros Calculados em quadrados individuais
+with st.container(border=True):
+    st.markdown("**2. Parâmetros Hidrodinâmicos Calculados**")
+    out1, out2, out3, out4, out5 = st.columns(5)
+    with out1:
+        with st.container(border=True):
+            st.metric("Comprimento (L)", f"{L:.2f} m")
+    with out2:
+        with st.container(border=True):
+            st.metric("Vel. de Fase (C)", f"{C:.2f} m/s")
+    with out3:
+        with st.container(border=True):
+            st.metric("Vel. de Grupo (Cg)", f"{Cg:.2f} m/s")
+    with out4:
+        with st.container(border=True):
+            st.metric("Energia (E)", f"{E/1000:.2f} kJ/m²")
+    with out5:
+        with st.container(border=True):
+            st.metric("Relação h/L", f"{ratio:.4f}")
 
 st.markdown("")
 
-# Linha 2 de métricas: Parâmetros Hidrodinâmicos Calculados
-st.markdown("**Parâmetros Hidrodinâmicos Calculados:**")
-out1, out2, out3, out4, out5 = st.columns(5)
-out1.metric("Comprimento (L)", f"{L:.2f} m")
-out2.metric("Vel. de Fase (C)", f"{C:.2f} m/s")
-out3.metric("Vel. de Grupo (Cg)", f"{Cg:.2f} m/s")
-out4.metric("Energia (E)", f"{E/1000:.2f} kJ/m²")
-out5.metric("Relação h/L", f"{ratio:.4f}")
+# Bloco 3: Área do Gráfico Único dentro de um quadro
+with st.container(border=True):
+    st.markdown("### Perfil Espacial da Onda")
+    x = np.linspace(0, 2 * L, 500)
+    eta = (H / 2) * np.cos(k * x)
 
-st.divider()
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
+    ax.fill_between(x, eta, -h, color='#90e0ef', alpha=0.45)
+    ax.axhline(0, color='gray', linestyle='--', linewidth=1, label='Nível Médio do Mar (z = 0)')
+    ax.axhline(-h, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h} m)')
 
-# Área do Gráfico Único (Perfil Espacial da Onda)
-st.markdown("### Perfil Espacial da Onda")
-x = np.linspace(0, 2 * L, 500)
-eta = (H / 2) * np.cos(k * x)
-
-fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
-ax.fill_between(x, eta, -h, color='#90e0ef', alpha=0.45)
-ax.axhline(0, color='gray', linestyle='--', linewidth=1, label='Nível Médio do Mar (z = 0)')
-ax.axhline(-h, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h} m)')
-
-ax.set_xlabel("Distância horizontal x (m)")
-ax.set_ylabel("Elevação vertical z (m)")
-ax.set_ylim(-h * 1.15, max(H, h * 0.3))
-ax.legend(loc="lower right", fontsize=9)
-ax.grid(True, linestyle=':', alpha=0.6)
-st.pyplot(fig)
+    ax.set_xlabel("Distância horizontal x (m)")
+    ax.set_ylabel("Elevação vertical z (m)")
+    ax.set_ylim(-h * 1.15, max(H, h * 0.3))
+    ax.legend(loc="lower right", fontsize=9)
+    ax.grid(True, linestyle=':', alpha=0.6)
+    st.pyplot(fig)
