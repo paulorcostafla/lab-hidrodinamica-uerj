@@ -6,45 +6,46 @@ import matplotlib.pyplot as plt
 # ==============================================================================
 # IDENTIDADE DO PROJETO
 # ==============================================================================
-NOME_DO_PROJETO = "Laboratório Virtual de Hidrodinâmica — UERJ-ZO"
+NOME_DO_PROJETO = "HIDRO-VIA (Laboratório Virtual de Hidrodinâmica) UERJ-ZO"
 SUBTITULO = "Simulador Interativo de Propagação de Ondas Oceânicas (Teoria Linear de Airy)"
 INSTITUICAO = "Universidade do Estado do Rio de Janeiro (Campus Zona Oeste)"
 # ==============================================================================
 
 # Configuração da página (aba do navegador)
 st.set_page_config(
-    page_title="Lab Virtual Hidrodinâmica | UERJ-ZO",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="HIDRO-VIA (Laboratório Virtual de Hidrodinâmica) UERJ-ZO",
+    layout="wide"
 )
 
 # Cabeçalho estilizado com identidade institucional
 st.markdown(f"""
     <div style="background: linear-gradient(90deg, #002855 0%, #00509d 100%); padding: 22px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #00a8e8;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">{NOME_DO_PROJETO}</h1>
-        <p style="color: #e0fbfc; margin: 6px 0 0 0; font-size: 16px;">{SUBTITULO}</p>
-        <p style="color: #90e0ef; margin: 12px 0 0 0; font-size: 13px;">
+        <h1 style="color: white; margin: 0; font-size: 26px;">{NOME_DO_PROJETO}</h1>
+        <p style="color: #e0fbfc; margin: 6px 0 0 0; font-size: 15px;">{SUBTITULO}</p>
+        <p style="color: #90e0ef; margin: 10px 0 0 0; font-size: 13px;">
             <b>Instituição:</b> {INSTITUICAO}
         </p>
     </div>
 """, unsafe_allow_html=True)
 
-# Barra lateral para os dados de entrada
-st.sidebar.markdown("### UERJ - Campus Zona Oeste")
-st.sidebar.header("Painel de Controle do Ensaio")
-st.sidebar.markdown("Ajuste os parâmetros da onda abaixo:")
+# Painel de Controle diretamente na tela principal (visível no celular e no PC)
+st.subheader("Painel de Controle do Ensaio")
+st.caption("Ajuste os parâmetros da onda abaixo para atualizar os cálculos automaticamente:")
 
-T = st.sidebar.number_input("Período da onda T (s):", min_value=1.0, max_value=30.0, value=10.0, step=0.5)
-h = st.sidebar.number_input("Profundidade local h (m):", min_value=0.5, max_value=500.0, value=15.0, step=1.0)
-H = st.sidebar.number_input("Altura da onda H (m):", min_value=0.1, max_value=30.0, value=2.0, step=0.1)
-rho = st.sidebar.selectbox(
-    "Densidade do fluido (kg/m³):",
-    [1025.0, 1000.0],
-    format_func=lambda x: f"{x} kg/m³ (Água do Mar)" if x == 1025.0 else f"{x} kg/m³ (Água Doce)"
-)
-
-st.sidebar.divider()
-st.sidebar.info("**Dica de Simulação:** Varie a profundidade (h) para observar a transição entre águas profundas, intermediárias e rasas.")
+with st.container(border=True):
+    p1, p2, p3, p4 = st.columns(4)
+    with p1:
+        T = st.number_input("Período da onda T (s):", min_value=1.0, max_value=30.0, value=10.0, step=0.5)
+    with p2:
+        h = st.number_input("Profundidade local h (m):", min_value=0.5, max_value=500.0, value=15.0, step=1.0)
+    with p3:
+        H = st.number_input("Altura da onda H (m):", min_value=0.1, max_value=30.0, value=2.0, step=0.1)
+    with p4:
+        rho = st.selectbox(
+            "Densidade do fluido (kg/m³):",
+            [1025.0, 1000.0],
+            format_func=lambda x: f"{x} kg/m³ (Água do Mar)" if x == 1025.0 else f"{x} kg/m³ (Água Doce)"
+        )
 
 # Função matemática de cálculo (Relação de Dispersão)
 def resolver_onda(T, h, g=9.81):
@@ -75,6 +76,7 @@ else:
     regime = "Águas Intermediárias (0.05 ≤ h/L ≤ 0.5)"
     cor_badge = "#059669"
 
+st.markdown("---")
 st.markdown(f"### Resultados da Simulação — Regime: <span style='color:{cor_badge};'>{regime}</span>", unsafe_allow_html=True)
 
 # Linha 1 de métricas: Parâmetros de Entrada do Ensaio
