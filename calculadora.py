@@ -63,7 +63,6 @@ def resolver_onda(T, h, g=9.81):
 g = 9.81
 k, L, C, Cg, ratio = resolver_onda(T, h)
 E = (1/8) * rho * g * (H**2)  # Densidade de energia (J/m²)
-P = E * Cg                     # Potência da onda (W/m)
 
 # Classificação do regime de profundidade
 if ratio > 0.5:
@@ -78,48 +77,41 @@ else:
 
 st.markdown(f"### Resultados da Simulação — Regime: <span style='color:{cor_badge};'>{regime}</span>", unsafe_allow_html=True)
 
-# Cartões de métricas
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("Comprimento (L)", f"{L:.2f} m")
-col2.metric("Vel. de Fase (C)", f"{C:.2f} m/s")
-col3.metric("Vel. de Grupo (Cg)", f"{Cg:.2f} m/s")
-col4.metric("Energia (E)", f"{E/1000:.2f} kJ/m²")
-col5.metric("Relação h/L", f"{ratio:.4f}")
+# Linha 1 de métricas: Parâmetros de Entrada do Ensaio
+st.markdown("**Parâmetros Definidos no Ensaio:**")
+in1, in2, in3, in4 = st.columns(4)
+in1.metric("Período (T)", f"{T:.2f} s")
+in2.metric("Altura da Onda (H)", f"{H:.2f} m")
+in3.metric("Profundidade (h)", f"{h:.2f} m")
+in4.metric("Densidade (ρ)", f"{rho:.0f} kg/m³")
+
+st.markdown("")
+
+# Linha 2 de métricas: Parâmetros Hidrodinâmicos Calculados
+st.markdown("**Parâmetros Hidrodinâmicos Calculados:**")
+out1, out2, out3, out4, out5 = st.columns(5)
+out1.metric("Comprimento (L)", f"{L:.2f} m")
+out2.metric("Vel. de Fase (C)", f"{C:.2f} m/s")
+out3.metric("Vel. de Grupo (Cg)", f"{Cg:.2f} m/s")
+out4.metric("Energia (E)", f"{E/1000:.2f} kJ/m²")
+out5.metric("Relação h/L", f"{ratio:.4f}")
 
 st.divider()
 
-# Área dos Gráficos
-graf1, graf2 = st.columns(2)
+# Área do Gráfico Único (Perfil Espacial da Onda)
+st.markdown("### Perfil Espacial da Onda")
+x = np.linspace(0, 2 * L, 500)
+eta = (H / 2) * np.cos(k * x)
 
-with graf1:
-    st.markdown("### 1. Perfil Espacial da Onda")
-    x = np.linspace(0, 2 * L, 400)
-    eta = (H / 2) * np.cos(k * x)
-    
-    fig1, ax1 = plt.subplots(figsize=(6, 4))
-    ax1.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
-    ax1.fill_between(x, eta, -h, color='#90e0ef', alpha=0.45)
-    ax1.axhline(0, color='gray', linestyle='--', linewidth=1, label='Nível Médio do Mar (z=0)')
-    ax1.axhline(-h, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z=-{h}m)')
-    
-    ax1.set_xlabel("Distância horizontal x (m)")
-    ax1.set_ylabel("Elevação vertical z (m)")
-    ax1.set_ylim(-h * 1.15, max(H, h * 0.3))
-    ax1.legend(loc="lower right", fontsize=8)
-    ax1.grid(True, linestyle=':', alpha=0.6)
-    st.pyplot(fig1)
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
+ax.fill_between(x, eta, -h, color='#90e0ef', alpha=0.45)
+ax.axhline(0, color='gray', linestyle='--', linewidth=1, label='Nível Médio do Mar (z = 0)')
+ax.axhline(-h, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h} m)')
 
-with graf2:
-    st.markdown("### 2. Curva de Dispersão (L vs. Profundidade)")
-    profundidades = np.linspace(0.5, max(100.0, h * 1.5), 100)
-    comprimentos = [resolver_onda(T, prof)[1] for prof in profundidades]
-    
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
-    ax2.plot(profundidades, comprimentos, color='#002855', linewidth=2.2, label=f'Curva teórica (T = {T}s)')
-    ax2.scatter([h], [L], color='#d00000', zorder=5, s=70, label=f'Ponto Simulado (h={h}m, L={L:.1f}m)')
-    
-    ax2.set_xlabel("Profundidade h (m)")
-    ax2.set_ylabel("Comprimento de onda L (m)")
-    ax2.legend(loc="lower right", fontsize=8)
-    ax2.grid(True, linestyle=':', alpha=0.6)
-    st.pyplot(fig2)
+ax.set_xlabel("Distância horizontal x (m)")
+ax.set_ylabel("Elevação vertical z (m)")
+ax.set_ylim(-h * 1.15, max(H, h * 0.3))
+ax.legend(loc="lower right", fontsize=9)
+ax.grid(True, linestyle=':', alpha=0.6)
+st.pyplot(fig)
