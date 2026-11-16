@@ -17,22 +17,40 @@ st.set_page_config(
     layout="wide"
 )
 
-# Cabeçalho estilizado com identidade institucional
+# Ajuste de tamanho das fontes (mais compactas e proporcionais)
+st.markdown("""
+    <style>
+        /* Tamanho dos valores numéricos nos cartões */
+        [data-testid="stMetricValue"] {
+            font-size: 1.35rem !important;
+        }
+        /* Tamanho dos rótulos nos cartões */
+        [data-testid="stMetricLabel"] {
+            font-size: 0.85rem !important;
+        }
+        /* Subtítulos de seção */
+        h3 {
+            font-size: 1.15rem !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Cabeçalho estilizado com identidade institucional (fontes ajustadas)
 st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #002855 0%, #00509d 100%); padding: 22px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #00a8e8;">
-        <h1 style="color: white; margin: 0; font-size: 26px;">{NOME_DO_PROJETO}</h1>
-        <p style="color: #e0fbfc; margin: 6px 0 0 0; font-size: 15px;">{SUBTITULO}</p>
-        <p style="color: #90e0ef; margin: 10px 0 0 0; font-size: 13px;">
+    <div style="background: linear-gradient(90deg, #002855 0%, #00509d 100%); padding: 18px; border-radius: 10px; margin-bottom: 18px; border-left: 6px solid #00a8e8;">
+        <h1 style="color: white; margin: 0; font-size: 21px;">{NOME_DO_PROJETO}</h1>
+        <p style="color: #e0fbfc; margin: 4px 0 0 0; font-size: 13.5px;">{SUBTITULO}</p>
+        <p style="color: #90e0ef; margin: 8px 0 0 0; font-size: 12px;">
             <b>Instituição:</b> {INSTITUICAO}
         </p>
     </div>
 """, unsafe_allow_html=True)
 
-# Painel de Controle diretamente na tela principal
-st.subheader("Painel de Controle do Ensaio")
-st.caption("Ajuste os parâmetros da onda abaixo para atualizar os cálculos automaticamente:")
+# Painel de Controle com botão Calcular (st.form)
+st.markdown("### Painel de Controle do Ensaio")
+st.caption("Preencha os parâmetros da onda abaixo e clique em **Calcular** para gerar os resultados:")
 
-with st.container(border=True):
+with st.form(key="form_ensaio"):
     p1, p2, p3, p4 = st.columns(4)
     with p1:
         T = st.number_input("Período da onda T (s):", min_value=1.0, max_value=30.0, value=10.0, step=0.5)
@@ -46,24 +64,36 @@ with st.container(border=True):
             [1025.0, 1000.0],
             format_func=lambda x: f"{x} kg/m³ (Água do Mar)" if x == 1025.0 else f"{x} kg/m³ (Água Doce)"
         )
+    
+    st.markdown("")
+    calcular = st.form_submit_button("Calcular", type="primary", use_container_width=True)
+
+# Salva os valores confirmados na sessão (inicia com os valores padrão na primeira abertura)
+if "params" not in st.session_state or calcular:
+    st.session_state["params"] = {"T": T, "h": h, "H": H, "rho": rho}
+
+T_calc = st.session_state["params"]["T"]
+h_calc = st.session_state["params"]["h"]
+H_calc = st.session_state["params"]["H"]
+rho_calc = st.session_state["params"]["rho"]
 
 # Função matemática de cálculo (Relação de Dispersão)
-def resolver_onda(T, h, g=9.81):
-    omega = 2 * np.pi / T
+def resolver_onda(T_val, h_val, g=9.81):
+    omega = 2 * np.pi / T_val
     k0 = omega**2 / g
-    f = lambda k: omega**2 - g * k * np.tanh(k * h)
-    fprime = lambda k: -g * np.tanh(k * h) - g * k * h * (1 - np.tanh(k * h)**2)
+    f = lambda k: omega**2 - g * k * np.tanh(k * h_val)
+    fprime = lambda k: -g * np.tanh(k * h_val) - g * k * h_val * (1 - np.tanh(k * h_val)**2)
     k = newton(f, x0=k0, fprime=fprime)
     L = 2 * np.pi / k
-    C = L / T
-    n = 0.5 * (1 + (2 * k * h) / np.sinh(2 * k * h))
+    C = L / T_val
+    n = 0.5 * (1 + (2 * k * h_val) / np.sinh(2 * k * h_val))
     Cg = n * C
-    return k, L, C, Cg, h / L
+    return k, L, C, Cg, h_val / L
 
-# Execução dos cálculos
+# Execução dos cálculos com base nos valores confirmados pelo botão
 g = 9.81
-k, L, C, Cg, ratio = resolver_onda(T, h)
-E = (1/8) * rho * g * (H**2)  # Densidade de energia (J/m²)
+k, L, C, Cg, ratio = resolver_onda(T_calc, h_calc)
+E = (1/8) * rho_calc * g * (H_calc**2)  # Densidade de energia (J/m²)
 
 # Classificação do regime de profundidade
 if ratio > 0.5:
@@ -85,16 +115,16 @@ with st.container(border=True):
     in1, in2, in3, in4 = st.columns(4)
     with in1:
         with st.container(border=True):
-            st.metric("Período (T)", f"{T:.2f} s")
+            st.metric("Período (T)", f"{T_calc:.2f} s")
     with in2:
         with st.container(border=True):
-            st.metric("Altura da Onda (H)", f"{H:.2f} m")
+            st.metric("Altura da Onda (H)", f"{H_calc:.2f} m")
     with in3:
         with st.container(border=True):
-            st.metric("Profundidade (h)", f"{h:.2f} m")
+            st.metric("Profundidade (h)", f"{h_calc:.2f} m")
     with in4:
         with st.container(border=True):
-            st.metric("Densidade (ρ)", f"{rho:.0f} kg/m³")
+            st.metric("Densidade (ρ)", f"{rho_calc:.0f} kg/m³")
 
 # Bloco 2: Parâmetros Calculados em quadrados individuais
 with st.container(border=True):
@@ -118,21 +148,23 @@ with st.container(border=True):
 
 st.markdown("")
 
-# Bloco 3: Área do Gráfico Único dentro de um quadro
+# Bloco 3: Área do Gráfico Único ampliado dentro de um quadro
 with st.container(border=True):
     st.markdown("### Perfil Espacial da Onda")
     x = np.linspace(0, 2 * L, 500)
-    eta = (H / 2) * np.cos(k * x)
+    eta = (H_calc / 2) * np.cos(k * x)
 
-    fig, ax = plt.subplots(figsize=(10, 4))
+    fig, ax = plt.subplots(figsize=(10, 5.5))
     ax.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
-    ax.fill_between(x, eta, -h, color='#90e0ef', alpha=0.45)
-    ax.axhline(0, color='gray', linestyle='--', linewidth=1, label='Nível Médio do Mar (z = 0)')
-    ax.axhline(-h, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h} m)')
+    ax.fill_between(x, eta, -h_calc, color='#90e0ef', alpha=0.45)
+    ax.axhline(0, color='gray', linestyle='--', linewidth=1.2, label='Nível Médio do Mar (z = 0)')
+    ax.axhline(-h_calc, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h_calc} m)')
 
-    ax.set_xlabel("Distância horizontal x (m)")
-    ax.set_ylabel("Elevação vertical z (m)")
-    ax.set_ylim(-h * 1.15, max(H, h * 0.3))
-    ax.legend(loc="lower right", fontsize=9)
+    ax.set_xlabel("Distância horizontal x (m)", fontsize=11)
+    ax.set_ylabel("Elevação vertical z (m)", fontsize=11)
+    ax.tick_params(axis='both', labelsize=10)
+    ax.set_ylim(-h_calc * 1.15, max(H_calc, h_calc * 0.3))
+    ax.legend(loc="lower right", fontsize=10)
     ax.grid(True, linestyle=':', alpha=0.6)
-    st.pyplot(fig)
+    fig.tight_layout()
+    st.pyplot(fig, use_container_width=True)
