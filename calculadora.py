@@ -140,4 +140,33 @@ if st.session_state["calculado"]:
                 st.metric("Vel. de Fase (C)", f"{C:.2f} m/s")
         with out3:
             with st.container(border=True):
-                st.metric("Vel. de Grupo (Cg
+                st.metric("Vel. de Grupo (Cg)", f"{Cg:.2f} m/s")
+        with out4:
+            with st.container(border=True):
+                st.metric("Energia (E)", f"{E/1000:.2f} kJ/m²")
+        with out5:
+            with st.container(border=True):
+                st.metric("Relação h/L", f"{ratio:.4f}")
+
+    st.markdown("")
+
+    # Bloco 3: Área do Gráfico Único ampliado dentro de um quadro
+    with st.container(border=True):
+        st.markdown("### Perfil Espacial da Onda")
+        x = np.linspace(0, 2 * L, 500)
+        eta = (H_calc / 2) * np.cos(k * x)
+
+        fig, ax = plt.subplots(figsize=(10, 5.5))
+        ax.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
+        ax.fill_between(x, eta, -h_calc, color='#90e0ef', alpha=0.45)
+        ax.axhline(0, color='gray', linestyle='--', linewidth=1.2, label='Nível Médio do Mar (z = 0)')
+        ax.axhline(-h_calc, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h_calc} m)')
+
+        ax.set_xlabel("Distância horizontal x (m)", fontsize=11)
+        ax.set_ylabel("Elevação vertical z (m)", fontsize=11)
+        ax.tick_params(axis='both', labelsize=10)
+        ax.set_ylim(-h_calc * 1.15, max(H_calc, h_calc * 0.3))
+        ax.legend(loc="lower right", fontsize=10)
+        ax.grid(True, linestyle=':', alpha=0.6)
+        fig.tight_layout()
+        st.pyplot(fig, use_container_width=True)
