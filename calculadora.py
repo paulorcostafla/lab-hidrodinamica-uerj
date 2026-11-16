@@ -20,15 +20,12 @@ st.set_page_config(
 # Ajuste de tamanho das fontes (mais compactas e proporcionais)
 st.markdown("""
     <style>
-        /* Tamanho dos valores numéricos nos cartões */
         [data-testid="stMetricValue"] {
             font-size: 1.35rem !important;
         }
-        /* Tamanho dos rótulos nos cartões */
         [data-testid="stMetricLabel"] {
             font-size: 0.85rem !important;
         }
-        /* Subtítulos de seção */
         h3 {
             font-size: 1.15rem !important;
         }
@@ -46,11 +43,15 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Painel de Controle com botão Calcular (st.form)
+# Inicializa o controle de exibição na memória da sessão
+if "calculado" not in st.session_state:
+    st.session_state["calculado"] = False
+
+# Painel de Controle diretamente na tela principal
 st.markdown("### Painel de Controle do Ensaio")
 st.caption("Preencha os parâmetros da onda abaixo e clique em **Calcular** para gerar os resultados:")
 
-with st.form(key="form_ensaio"):
+with st.container(border=True):
     p1, p2, p3, p4 = st.columns(4)
     with p1:
         T = st.number_input("Período da onda T (s):", min_value=1.0, max_value=30.0, value=10.0, step=0.5)
@@ -64,22 +65,79 @@ with st.form(key="form_ensaio"):
             [1025.0, 1000.0],
             format_func=lambda x: f"{x} kg/m³ (Água do Mar)" if x == 1025.0 else f"{x} kg/m³ (Água Doce)"
         )
-    
-    st.markdown("")
-    calcular = st.form_submit_button("Calcular", type="primary", use_container_width=True)
 
-# Só salva os parâmetros quando o usuário clicar explicitamente no botão Calcular
-if calcular:
-    st.session_state["params"] = {"T": T, "h": h, "H": H, "rho": rho}
+    st.markdown("")
+    if st.button("Calcular", type="primary", use_container_width=True):
+        st.session_state["calculado"] = True
+        st.session_state["T_val"] = T
+        st.session_state["h_val"] = h
+        st.session_state["H_val"] = H
+        st.session_state["rho_val"] = rho
 
 # Função matemática de cálculo (Relação de Dispersão)
-def resolver_onda(T_val, h_val, g=9.81):
-    omega = 2 * np.pi / T_val
+def resolver_onda(T_in, h_in, g=9.81):
+    omega = 2 * np.pi / T_in
     k0 = omega**2 / g
-    f = lambda k: omega**2 - g * k * np.tanh(k * h_val)
-    fprime = lambda k: -g * np.tanh(k * h_val) - g * k * h_val * (1 - np.tanh(k * h_val)**2)
+    f = lambda k: omega**2 - g * k * np.tanh(k * h_in)
+    fprime = lambda k: -g * np.tanh(k * h_in) - g * k * h_in * (1 - np.tanh(k * h_in)**2)
     k = newton(f, x0=k0, fprime=fprime)
     L = 2 * np.pi / k
-    C = L / T_val
-    n = 0.5 * (1 + (2 * k * h_val) / np.sinh(2 * k * h_val))
+    C = L / T_in
+    n = 0.5 * (1 + (2 * k * h_in) / np.sinh(2 * k * h_in))
     Cg = n * C
+    return k, L, C, Cg, h_in / L
+
+# Só renderiza os resultados se o botão Calcular já tiver sido pressionado
+if st.session_state["calculado"]:
+    T_calc = st.session_state["T_val"]
+    h_calc = st.session_state["h_val"]
+    H_calc = st.session_state["H_val"]
+    rho_calc = st.session_state["rho_val"]
+
+    g = 9.81
+    k, L, C, Cg, ratio = resolver_onda(T_calc, h_calc)
+    E = (1/8) * rho_calc * g * (H_calc**2)
+
+    if ratio > 0.5:
+        regime = "Águas Profundas (h/L > 0.5)"
+        cor_badge = "#0077b6"
+    elif ratio < 0.05:
+        regime = "Águas Rasas (h/L < 0.05)"
+        cor_badge = "#d97706"
+    else:
+        regime = "Águas Intermediárias (0.05 ≤ h/L ≤ 0.5)"
+        cor_badge = "#059669"
+
+    st.markdown("---")
+    st.markdown(f"### Resultados da Simulação — Regime: <span style='color:{cor_badge};'>{regime}</span>", unsafe_allow_html=True)
+
+    # Bloco 1: Parâmetros de Entrada em quadrados individuais
+    with st.container(border=True):
+        st.markdown("**1. Parâmetros Definidos no Ensaio**")
+        in1, in2, in3, in4 = st.columns(4)
+        with in1:
+            with st.container(border=True):
+                st.metric("Período (T)", f"{T_calc:.2f} s")
+        with in2:
+            with st.container(border=True):
+                st.metric("Altura da Onda (H)", f"{H_calc:.2f} m")
+        with in3:
+            with st.container(border=True):
+                st.metric("Profundidade (h)", f"{h_calc:.2f} m")
+        with in4:
+            with st.container(border=True):
+                st.metric("Densidade (ρ)", f"{rho_calc:.0f} kg/m³")
+
+    # Bloco 2: Parâmetros Calculados em quadrados individuais
+    with st.container(border=True):
+        st.markdown("**2. Parâmetros Hidrodinâmicos Calculados**")
+        out1, out2, out3, out4, out5 = st.columns(5)
+        with out1:
+            with st.container(border=True):
+                st.metric("Comprimento (L)", f"{L:.2f} m")
+        with out2:
+            with st.container(border=True):
+                st.metric("Vel. de Fase (C)", f"{C:.2f} m/s")
+        with out3:
+            with st.container(border=True):
+                st.metric("Vel. de Grupo (Cg
