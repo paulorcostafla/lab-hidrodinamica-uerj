@@ -1,7 +1,7 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
 from scipy.optimize import newton
-import matplotlib.pyplot as plt
 
 # ==============================================================================
 # IDENTIDADE DO PROJETO
@@ -17,29 +17,57 @@ st.set_page_config(
     layout="wide"
 )
 
-# Ajuste de tamanho das fontes (mais compactas e proporcionais)
+# Ajuste de tamanho das fontes e estilo geral
 st.markdown("""
     <style>
         [data-testid="stMetricValue"] {
             font-size: 1.35rem !important;
+            color: #002855;
         }
         [data-testid="stMetricLabel"] {
             font-size: 0.85rem !important;
         }
         h3 {
             font-size: 1.15rem !important;
+            color: #002855;
+        }
+        /* Onda animada sutil no cabeçalho */
+        @keyframes waveMove {
+            0% { background-position-x: 0px; }
+            100% { background-position-x: 1000px; }
+        }
+        .header-banner {
+            background: linear-gradient(135deg, #001d3d 0%, #003566 50%, #0077b6 100%);
+            padding: 22px 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 6px solid #00b4d8;
+            box-shadow: 0 4px 12px rgba(0, 40, 85, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .header-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 18px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,60 C300,120 900,0 1200,60 L1200,120 L0,120 Z' fill='rgba(144, 224, 239, 0.18)'/%3E%3C/svg%3E");
+            background-size: 500px 18px;
+            animation: waveMove 12s linear infinite;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho estilizado com identidade institucional
+# Cabeçalho estilizado com onda animada
 st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #002855 0%, #00509d 100%); padding: 18px; border-radius: 10px; margin-bottom: 18px; border-left: 6px solid #00a8e8;">
-        <h1 style="color: white; margin: 0; font-size: 21px;">{NOME_DO_PROJETO}</h1>
-        <p style="color: #e0fbfc; margin: 4px 0 0 0; font-size: 13.5px;">{SUBTITULO}</p>
+    <div class="header-banner">
+        <h1 style="color: white; margin: 0; font-size: 22px; letter-spacing: 0.3px;">{NOME_DO_PROJETO}</h1>
+        <p style="color: #caf0f8; margin: 5px 0 0 0; font-size: 13.5px;">{SUBTITULO}</p>
         <p style="color: #90e0ef; margin: 8px 0 0 0; font-size: 12px;">
             <b>Instituição:</b> {INSTITUICAO}
         </p>
+        <div class="header-wave"></div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -49,7 +77,7 @@ if "calculado" not in st.session_state:
 
 # Painel de Controle diretamente na tela principal
 st.markdown("### Painel de Controle do Ensaio")
-st.caption("Preencha os parâmetros da onda abaixo e clique em **Calcular** para gerar os resultados:")
+st.caption("Preencha os parâmetros da onda abaixo e clique em **Calcular** para iniciar a simulação:")
 
 with st.container(border=True):
     p1, p2, p3, p4 = st.columns(4)
@@ -150,23 +178,259 @@ if st.session_state["calculado"]:
 
     st.markdown("")
 
-    # Bloco 3: Área do Gráfico Único ampliado dentro de um quadro
+    # Bloco 3: Simulação Animada em Tempo Real (4 Comprimentos de Onda)
     with st.container(border=True):
-        st.markdown("### Perfil Espacial da Onda")
-        x = np.linspace(0, 2 * L, 500)
-        eta = (H_calc / 2) * np.cos(k * x)
+        st.markdown("### Perfil Espacial Animado da Onda — η(x, t)")
+        st.caption(f"Propagação em tempo real: 4 comprimentos de onda (0 a {4*L:.1f} m) com período T = {T_calc:.1f} s e velocidade C = {C:.2f} m/s.")
 
-        fig, ax = plt.subplots(figsize=(10, 5.5))
-        ax.plot(x, eta, color='#00509d', linewidth=2.5, label='Superfície Livre (η)')
-        ax.fill_between(x, eta, -h_calc, color='#90e0ef', alpha=0.45)
-        ax.axhline(0, color='gray', linestyle='--', linewidth=1.2, label='Nível Médio do Mar (z = 0)')
-        ax.axhline(-h_calc, color='#7f4f24', linewidth=3.5, label=f'Fundo Oceânico (z = -{h_calc} m)')
+        html_onda = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+            body {{
+                margin: 0;
+                padding: 0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: transparent;
+            }}
+            .controls {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }}
+            .btn {{
+                background-color: #00509d;
+                color: white;
+                border: none;
+                padding: 6px 14px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+                transition: background 0.2s;
+            }}
+            .btn:hover {{
+                background-color: #003566;
+            }}
+            .legend {{
+                display: flex;
+                gap: 16px;
+                font-size: 12px;
+                color: #334155;
+                flex-wrap: wrap;
+            }}
+            .legend-item {{
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }}
+            .box-wave {{ width: 16px; height: 4px; background: #0077b6; border-radius: 2px; }}
+            .box-mean {{ width: 16px; height: 0; border-top: 2px dashed #64748b; }}
+            .box-bed  {{ width: 16px; height: 5px; background: #7f4f24; border-radius: 2px; }}
+            canvas {{
+                width: 100%;
+                height: 360px;
+                border-radius: 8px;
+                border: 1px solid #cbd5e1;
+                background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+                display: block;
+            }}
+        </style>
+        </head>
+        <body>
+            <div class="controls">
+                <button class="btn" id="toggleBtn" onclick="toggleAnim()">Pausar Onda</button>
+                <div class="legend">
+                    <div class="legend-item"><span class="box-wave"></span> Superfície Livre η(x, t)</div>
+                    <div class="legend-item"><span class="box-mean"></span> Nível Médio do Mar (z = 0)</div>
+                    <div class="legend-item"><span class="box-bed"></span> Fundo Oceânico (z = -{h_calc:.1f} m)</div>
+                </div>
+            </div>
+            <canvas id="waveCanvas"></canvas>
 
-        ax.set_xlabel("Distância horizontal x (m)", fontsize=11)
-        ax.set_ylabel("Elevação vertical z (m)", fontsize=11)
-        ax.tick_params(axis='both', labelsize=10)
-        ax.set_ylim(-h_calc * 1.15, max(H_calc, h_calc * 0.3))
-        ax.legend(loc="lower right", fontsize=10)
-        ax.grid(True, linestyle=':', alpha=0.6)
-        fig.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+            <script>
+                const canvas = document.getElementById('waveCanvas');
+                const ctx = canvas.getContext('2d');
+
+                // Parâmetros físicos vindos do Python
+                const H = {H_calc};
+                const h = {h_calc};
+                const L = {L};
+                const T = {T_calc};
+                const numWaves = 4; // Mostra 4 ondas completas na tela
+                const maxX = numWaves * L;
+                const k = (2 * Math.PI) / L;
+                const omega = (2 * Math.PI) / T;
+
+                let running = true;
+                let lastTime = performance.now();
+                let simTime = 0;
+
+                function toggleAnim() {{
+                    running = !running;
+                    document.getElementById('toggleBtn').innerText = running ? 'Pausar Onda' : 'Continuar Onda';
+                    if (running) {{
+                        lastTime = performance.now();
+                        requestAnimationFrame(draw);
+                    }}
+                }}
+
+                function resizeCanvas() {{
+                    const rect = canvas.getBoundingClientRect();
+                    const dpr = window.devicePixelRatio || 1;
+                    canvas.width = rect.width * dpr;
+                    canvas.height = rect.height * dpr;
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                }}
+
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+
+                function draw(now) {{
+                    if (!running) return;
+                    const dt = (now - lastTime) / 1000;
+                    lastTime = now;
+                    simTime += dt;
+
+                    const width = canvas.getBoundingClientRect().width;
+                    const height = canvas.getBoundingClientRect().height;
+
+                    // Margens do gráfico
+                    const padLeft = 58;
+                    const padRight = 24;
+                    const padTop = 26;
+                    const padBottom = 42;
+                    const plotW = width - padLeft - padRight;
+                    const plotH = height - padTop - padBottom;
+
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Escala vertical adaptativa (garante boa visualização mesmo em águas muito profundas)
+                    const visualDepth = Math.min(h, Math.max(H * 3.5, 12));
+                    const zMax = Math.max(H * 0.85, visualDepth * 0.25);
+                    const zMin = -visualDepth * 1.08;
+                    const zRange = zMax - zMin;
+
+                    const toPxX = (x) => padLeft + (x / maxX) * plotW;
+                    const toPxY = (z) => padTop + ((zMax - z) / zRange) * plotH;
+
+                    const yZero = toPxY(0);
+                    const yBed = toPxY(-visualDepth);
+
+                    // Grade horizontal sutil
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1;
+                    ctx.font = '11px sans-serif';
+                    ctx.fillStyle = '#475569';
+                    ctx.textAlign = 'right';
+
+                    const ticks = [zMax * 0.7, 0, -visualDepth * 0.5, -visualDepth];
+                    ticks.forEach((val, idx) => {{
+                        const py = toPxY(val);
+                        ctx.beginPath();
+                        ctx.moveTo(padLeft, py);
+                        ctx.lineTo(width - padRight, py);
+                        ctx.stroke();
+
+                        let labelVal = val;
+                        if (idx === 3) labelVal = -h; // Valor real da profundidade no fundo
+                        else if (idx === 2) labelVal = -h * 0.5;
+                        ctx.fillText(labelVal.toFixed(1) + ' m', padLeft - 8, py + 4);
+                    }});
+
+                    // Grade vertical (marcando cada comprimento de onda L)
+                    ctx.textAlign = 'center';
+                    for (let i = 0; i <= numWaves; i++) {{
+                        const xVal = i * L;
+                        const px = toPxX(xVal);
+                        ctx.beginPath();
+                        ctx.moveTo(px, padTop);
+                        ctx.lineTo(px, height - padBottom);
+                        ctx.stroke();
+                        ctx.fillText(xVal.toFixed(0) + ' m', px, height - padBottom + 18);
+                    }}
+
+                    // Título dos eixos
+                    ctx.fillStyle = '#1e293b';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText('Distância horizontal x (m)', padLeft + plotW / 2, height - 8);
+
+                    ctx.save();
+                    ctx.translate(15, padTop + plotH / 2);
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.fillText('Elevação z (m)', 0, 0);
+                    ctx.restore();
+
+                    // Corpo da água com degradê oceânico
+                    const waterGrad = ctx.createLinearGradient(0, yZero - (H/2)*(plotH/zRange), 0, yBed);
+                    waterGrad.addColorStop(0, 'rgba(0, 180, 216, 0.55)');
+                    waterGrad.addColorStop(0.5, 'rgba(0, 119, 182, 0.45)');
+                    waterGrad.addColorStop(1, 'rgba(2, 62, 138, 0.65)');
+
+                    ctx.beginPath();
+                    const steps = 300;
+                    for (let i = 0; i <= steps; i++) {{
+                        const x = (i / steps) * maxX;
+                        const eta = (H / 2) * Math.cos(k * x - omega * simTime);
+                        const px = toPxX(x);
+                        const py = toPxY(eta);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }}
+                    ctx.lineTo(toPxX(maxX), yBed);
+                    ctx.lineTo(toPxX(0), yBed);
+                    ctx.closePath();
+                    ctx.fillStyle = waterGrad;
+                    ctx.fill();
+
+                    // Linha tracejada do Nível Médio do Mar (z = 0)
+                    ctx.save();
+                    ctx.setLineDash([6, 5]);
+                    ctx.strokeStyle = '#64748b';
+                    ctx.lineWidth = 1.3;
+                    ctx.beginPath();
+                    ctx.moveTo(padLeft, yZero);
+                    ctx.lineTo(width - padRight, yZero);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Linha brilhante da Superfície Livre η(x, t)
+                    ctx.beginPath();
+                    for (let i = 0; i <= steps; i++) {{
+                        const x = (i / steps) * maxX;
+                        const eta = (H / 2) * Math.cos(k * x - omega * simTime);
+                        const px = toPxX(x);
+                        const py = toPxY(eta);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }}
+                    ctx.strokeStyle = '#00509d';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // Fundo Oceânico (camada sedimentar)
+                    ctx.fillStyle = '#7f4f24';
+                    ctx.fillRect(padLeft, yBed, plotW, 8);
+                    ctx.fillStyle = '#582f0e';
+                    ctx.fillRect(padLeft, yBed + 8, plotW, 4);
+
+                    // Indicador de tempo decorrido no canto superior direito
+                    ctx.fillStyle = '#002855';
+                    ctx.font = 'bold 12px monospace';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('t = ' + simTime.toFixed(1) + ' s', width - padRight - 10, padTop + 16);
+
+                    requestAnimationFrame(draw);
+                }}
+
+                requestAnimationFrame(draw);
+            </script>
+        </body>
+        </html>
+        """
+
+        components.html(html_onda, height=415)
