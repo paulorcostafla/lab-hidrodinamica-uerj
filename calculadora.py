@@ -146,4 +146,7 @@ st.caption(
 box_controle = st.container(border=True)
 p1, p2, p3, p4 = box_controle.columns(4)
 
-T
+T = p1.number_input("Período da onda T (s):", 1.0, 30.0, 10.0, 0.5)
+h = p2.number_input("Profundidade local h (m):", 0.5, 500.0, 15.0, 1.0)
+H = p3.number_input("Altura da onda H (m):", 0.1, 30.0, 2.0, 0.1)
+rho = p4.selectbox("Densidade ρ (kg/m³):", [1025.0, 1000.0])
