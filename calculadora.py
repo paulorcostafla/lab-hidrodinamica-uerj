@@ -16,7 +16,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilo global (em linha única segura para evitar erro de colagem)
 css_global = (
     '<style>'
     '[data-testid="stMetricValue"] { font-size: 1.32rem !important; color: #002855; font-weight: 700; }'
@@ -35,7 +34,6 @@ css_global = (
 )
 st.markdown(css_global, unsafe_allow_html=True)
 
-# Cabeçalho estilizado com ondas duplas animadas
 header_html = (
     f'<div class="header-banner">'
     f'<div class="header-badge">Plataforma Educacional de Hidrodinâmica Costeira</div>'
@@ -51,16 +49,12 @@ st.markdown(header_html, unsafe_allow_html=True)
 if "calculado" not in st.session_state:
     st.session_state["calculado"] = False
 
-# Painel de Controle diretamente na tela principal
 st.markdown("### Painel de Controle do Ensaio")
 st.caption("Defina os parâmetros físicos da onda incidente e clique em **Calcular** para executar a simulação:")
 
-with st.container(border=True):
-    p1, p2, p3, p4 = st.columns(4)
-    with p1:
-        T = st.number_input("Período da onda T (s):", min_value=1.0, max_value=30.0, value=10.0, step=0.5, help="Tempo entre a passagem de duas cristas consecutivas.")
-    with p2:
-        h = st.number_input("Profundidade local h (m):", min_value=0.5, max_value=500.0, value=15.0, step=1.0, help="Distância vertical entre o nível médio do mar e o fundo.")
-    with p3:
-        H = st.number_input("Altura da onda H (m):", min_value=0.1, max_value=30.0, value=2.0, step=0.1, help="Distância vertical entre a cava e a crista da onda.")
-    with p4:
+box_controle = st.container(border=True)
+p1, p2, p3, p4 = box_controle.columns(4)
+T = p1.number_input("Período da onda T (s):", min_value=1.0, max_value=30.0, value=10.0, step=0.5)
+h = p2.number_input("Profundidade local h (m):", min_value=0.5, max_value=500.0, value=15.0, step=1.0)
+H = p3.number_input("Altura da onda H (m):", min_value=0.1, max_value=30.0, value=2.0, step=0.1)
+rho = p4.selectbox("Densidade do fluido ρ (kg/m³):", [1025.0, 1000.
