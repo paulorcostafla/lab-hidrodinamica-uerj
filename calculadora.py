@@ -99,4 +99,17 @@ rho = p4.selectbox(
     format_func=lambda x: f"{x} kg/m³ (Água do Mar)" if x == 1025.0 else f"{x} kg/m³ (Água Doce)"
 )
 
-box_controle.
+box_controle.markdown("")
+if box_controle.button("Calcular", type="primary", use_container_width=True):
+    st.session_state["calculado"] = True
+    st.session_state["T_val"] = T
+    st.session_state["h_val"] = h
+    st.session_state["H_val"] = H
+    st.session_state["rho_val"] = rho
+
+
+def resolver_onda(T_in, h_in, g=9.81):
+    omega = 2 * np.pi / T_in
+    k0 = omega**2 / g
+    f = lambda k: omega**2 - g * k * np.tanh(k * h_in)
+    fprime = lambda k: -g * np.tanh(k * h_in) - g * k * h_in * (1 - np.
